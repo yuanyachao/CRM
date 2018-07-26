@@ -1,0 +1,259 @@
+s5day82
+内容回顾：
+	1. Http请求本质
+		Django程序：socket服务端
+			a. 服务端监听IP和端口
+			c. 接受请求
+					\r\n\r\n：请求头和请求体
+					\r\n
+					&
+					request.POST
+					request.GET
+			d. 响应：
+					响应头： location：www.oldboyedu.com
+					和
+					响应体
+			e. 断开连接
+					
+		浏览器：    socket客户端
+			b. 浏览器发送：
+				GET请求：
+					"GET /index.html http1.1\r\nUser-Agent:Mozilla/5.0 (Windows NT 6.1; Win64; x6..\r\n\r\nAccept-Encoding:gzip\r\n\r\n"
+				POST请求：
+					"POST /index.html http1.1\r\nUser-Agent:Mozilla/5.0 (Windows NT 6.1; Win64; x6..\r\n\r\nAccept-Encoding:gzip\r\n\r\nuser=cqz&hobby=lihao"
+		
+			e. 断开连接
+		
+		
+		COOKIE: 请求头和响应头中存在
+	
+	2. Django请求的生命周期
+		wsgi			->    中间件     ->  路由系统   ->    视图函数（ORM，Template，渲染）
+			- wsgiref
+			- uwsgi
+			
+		
+		PS: 中间件，FBV&CBV
+	
+	
+	3. FBV和CBV
+		function base view， URL对应函数
+		class base view，    URL对应类
+		
+		
+		PS：
+			form表单提交：    GET,POST   ***
+			
+			Ajax提交数据：    GET,POST
+							  ['get'获取, 'post'创建, 'put'更新, 'patch'局部更新, 'delete'删除, 'head', 'options', 'trace'] -> restful规范
+	
+		
+		a. 基本使用
+		
+		b. 基于dispatch和继承实现用户登录代码
+		
+		c. 装饰器
+			get,post方法上
+						class LoginView(View):
+							
+							def dispatch(self, request, *args, **kwargs):
+								return super(LoginView,self).dispatch(request, *args, **kwargs)
+
+							def get(self,request):
+								return render(request,'login.html')
+
+							@method_decorator(test)
+							def post(self,request):
+								# request.GET
+								# request.POST # 请求头中的：content-type
+								# request.body
+								user = request.POST.get('user')
+								pwd = request.POST.get('pwd')
+								if user == 'alex' and pwd == "alex3714":
+									# 生成随机字符串
+									# 写浏览器cookie： session_id: 随机字符串
+									# 写到服务端session：
+									# {
+									#     "随机字符串": {'user_info':'alex}
+									# }
+									request.session['user_info'] = "alex"
+									return redirect('/index.html')
+								return render(request, 'login.html')
+			dispatch方法上
+				class LoginView(View):
+					@method_decorator(test)
+					def dispatch(self, request, *args, **kwargs):
+						return super(LoginView,self).dispatch(request, *args, **kwargs)
+
+					def get(self,request):
+						return render(request,'login.html')
+
+					
+					def post(self,request):
+						# request.GET
+						# request.POST # 请求头中的：content-type
+						# request.body
+						user = request.POST.get('user')
+						pwd = request.POST.get('pwd')
+						if user == 'alex' and pwd == "alex3714":
+							# 生成随机字符串
+							# 写浏览器cookie： session_id: 随机字符串
+							# 写到服务端session：
+							# {
+							#     "随机字符串": {'user_info':'alex}
+							# }
+							request.session['user_info'] = "alex"
+							return redirect('/index.html')
+						return render(request, 'login.html')
+			类上
+				@method_decorator(test,name='get')
+				class LoginView(View):
+					
+					def dispatch(self, request, *args, **kwargs):
+						return super(LoginView,self).dispatch(request, *args, **kwargs)
+
+					def get(self,request):
+						return render(request,'login.html')
+
+
+					def post(self,request):
+						# request.GET
+						# request.POST # 请求头中的：content-type
+						# request.body
+						user = request.POST.get('user')
+						pwd = request.POST.get('pwd')
+						if user == 'alex' and pwd == "alex3714":
+							# 生成随机字符串
+							# 写浏览器cookie： session_id: 随机字符串
+							# 写到服务端session：
+							# {
+							#     "随机字符串": {'user_info':'alex}
+							# }
+							request.session['user_info'] = "alex"
+							return redirect('/index.html')
+						return render(request, 'login.html')
+						
+			特殊：CSRF Token只能加到dispatch
+			
+				
+					from django.views.decorators.csrf import csrf_exempt,csrf_protect
+					class LoginView(View):
+						@method_decorator(csrf_exempt)
+						def dispatch(self, request, *args, **kwargs):
+							return super(LoginView,self).dispatch(request, *args, **kwargs)
+
+						def get(self,request):
+							return render(request,'login.html')
+
+
+						def post(self,request):
+							# request.GET
+							# request.POST # 请求头中的：content-type
+							# request.body
+							user = request.POST.get('user')
+							pwd = request.POST.get('pwd')
+							if user == 'alex' and pwd == "alex3714":
+								# 生成随机字符串
+								# 写浏览器cookie： session_id: 随机字符串
+								# 写到服务端session：
+								# {
+								#     "随机字符串": {'user_info':'alex}
+								# }
+								request.session['user_info'] = "alex"
+								return redirect('/index.html')
+							return render(request, 'login.html')
+
+	4. 中间件
+		a. 中间件是一个类
+			- process_request
+				- 有，直接执行当前中间件和上方中间件的process_response
+				- 无
+				应用： 用户登录授权（排除不需要登录的url）
+			- process_response
+				- 必须有返回值
+			
+			- process_view
+			
+			- process_exception
+			
+			- process_tempalte_response
+				- 必须有返回值
+				- 必须对象中要有render方法
+			
+		b. 流程
+		
+		c. 什么时候用中间件？所有请求统一做处理时使用
+			- 登录验证 
+			
+			
+		d. 中间件中的方法，可以有任意个
+		
+今日内容概要：
+	1. Django内容补充
+		- FBV&CBV
+		- 中间件
+	2. Git使用
+		- 什么是GIT，
+		- 张开的故事：资源共享网站
+			- 小弟弟系列
+			- 小芳系列
+			
+		- 第一个版本：进入程序目录：
+			git init        			初始化
+			git add .       			当前目录中所有文件添加到【某个地方】
+			git commit -m '描述信息'	第一版本git已经生成
+			
+			git status
+			
+		- 新功能： 李浩专区
+			
+			开发到了一半，紧急修复线上BUG
+			
+			git stash
+			
+			解决bug
+			git add .
+			git commit -m '修复bug完毕'
+			
+			
+			git stash pop 
+				可能出现冲突，出现之后不要着急，手动解决冲突
+				Auto-merging templates/index.html
+				CONFLICT (content): Merge conflict in templates/index.html
+				
+			开发功能完毕
+			
+			git add . 
+			git commit -m '解决冲突后，继续开发后续功能'
+				
+			
+			PS: 
+				git stash           将当前工作区所有修改过的内容存储到“某个地方”，将工作区还原到当前版本未修改过的状态
+				git stash pop       将第一个记录从“某个地方”重新拿到工作区（可能有冲突）
+				git stash list      查看“某个地方”存储的所有记录
+				git stash clear     清空“某个地方”
+				git stash apply     编号, 将指定编号记录从“某个地方”重新拿到工作区（可能有冲突） 
+				git stash drop      编号，删除指定编号的记录
+			
+			
+		- 疑问：
+			git log 
+			git reset --hard  3ee80517425148b9d87591c9bd29a77e3db89ff2
+			git reflog
+
+			
+			
+			
+		
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
